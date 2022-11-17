@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">networkTrans</string>
+    <string name="title">input your number</string>
+    <string name="big_cpu">大核频率</string>
+    <string name="waiting">wating</string>
+    <string name="little_freq">小核频率</string>
+    <string name="fps">当前帧率</string>
+</resources>
