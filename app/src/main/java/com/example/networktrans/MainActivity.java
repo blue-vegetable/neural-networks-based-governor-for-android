@@ -2,6 +2,7 @@ package com.example.networktrans;
 
 import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -11,6 +12,7 @@ import org.tensorflow.lite.DataType;
 import org.tensorflow.lite.support.tensorbuffer.TensorBuffer;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 
 
@@ -20,17 +22,40 @@ public class MainActivity extends AppCompatActivity {
     private Button btn_2;
     private Button btn_equ;
     private TextView output;
-    private TextView littleCpuFreq;
-    private TextView bigCpuFreq;
-    private TextView fps;
-    private float input;
-    private ArrayList<String> classNames;
     private TFLiteClassificationUtil tfLiteClassificationUtil;
     private ArrayList<Float> buffer = new ArrayList<>();
+    String view;
 
     TensorBuffer x =  TensorBuffer.createDynamic(DataType.FLOAT32);
     TensorBuffer y =  TensorBuffer.createDynamic(DataType.FLOAT32);
 
+    public class SystemInfoThread extends Thread{
+        private String view;
+        public SystemInfoThread(String view){
+            this.view = view;
+        }
+        @Override
+        public void run(){
+            while(SystemInformationUtils.lastTimestamp == null){
+                try {
+                    Thread.sleep(100);
+                    SystemInformationUtils.init(view);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+
+            while(true){
+                try {
+                    Thread.sleep(1000);
+                    calculate();
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,25 +63,28 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         init();
         setEventListener();
-    }
-    @Override
-    protected  void onStart() {
-        super.onStart();
+        try {
+            long t1 = System.currentTimeMillis();
+            loadModel();
+            long t2 = System.currentTimeMillis();
+            Log.d("TAG","load model takes " + (t2 - t1));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        String command = "echo \"userspace\" >  /sys/devices/system/cpu/cpufreq/policy0/scaling_governor"; // little cpu governor
+        CommandExecution.execCommand(command,true);
+        command = "echo \"userspace\" >  /sys/devices/system/cpu/cpufreq/policy4/scaling_governor";  // big cpu governor
+        CommandExecution.execCommand(command,true);
+        SystemInfoThread sit = new SystemInfoThread(view);
+        sit.start();
     }
 
-    @Override
-    protected void onStop(){
-        super.onStop();
-    }
-
-    private void init(){
-        btn_1 = (Button) findViewById(R.id.button1);
-        btn_2 = (Button) findViewById(R.id.button2);
-        btn_equ = (Button) findViewById(R.id.button3);
-        output = (TextView) findViewById(R.id.textView);
-        bigCpuFreq = findViewById(R.id.textView3);
-        littleCpuFreq = findViewById(R.id.textView5);
-        fps = findViewById(R.id.textView7);
+    private void init() {
+        btn_1 =findViewById(R.id.button1);
+        btn_2 = findViewById(R.id.button2);
+        btn_equ = findViewById(R.id.button3);
+        output = findViewById(R.id.textView);
+        view = "com.ss.android.ugc.aweme/com.ss.android.ugc.aweme.splash.SplashActivity#0";
     }
 
     private void setEventListener(){
@@ -69,10 +97,15 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onClick(View v) {
             switch(v.getId()) {
-                case R.id.button1: buffer.add(1.0F); output.setText("1"); break;
+                case R.id.button1: buffer.add(1.0F); output.setText("1");
+                    try {
+                        Runtime.getRuntime().exec("su");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    break;
                 case R.id.button2: buffer.add(2.0F);  output.setText("2"); break;
                 case R.id.button3: try {
-//                    flushInformation();
                     calculate();
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -81,43 +114,57 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     };
-    private void flushInformation(){
-        littleCpuFreq.setText(SystemInformationUtils.getLittleCpuFreq());
-        bigCpuFreq.setText(SystemInformationUtils.getBigCpuFreq());
-        String view = "com.example.networktrans/com.example.networktrans.MainActivity#0";
-        SystemInformationUtils.getFps(view);
-    }
 
-    private void calculate() throws Exception {
+    private void loadModel() {
         String classificationModelPath = getCacheDir().getAbsolutePath() + File.separator + "model.tflite";
         Utils.copyFileFromAsset(MainActivity.this, "model.tflite", classificationModelPath);
-
+        // load the model
         try {
             tfLiteClassificationUtil = new TFLiteClassificationUtil(classificationModelPath);
-            Toast.makeText(MainActivity.this, "模型加载成功！", Toast.LENGTH_SHORT).show();
+            Toast.makeText(MainActivity.this, "load model succeeded", Toast.LENGTH_SHORT).show();
         } catch (Exception e) {
-            Toast.makeText(MainActivity.this, "模型加载失败！", Toast.LENGTH_SHORT).show();
+            Toast.makeText(MainActivity.this, "load model failed", Toast.LENGTH_SHORT).show();
             e.printStackTrace();
             finish();
         }
+    }
 
-        int size = buffer.size();
-        int[] shape = {size};
-        float [] temp = new float[size];
-        int index = 0;
-        for(final Float value: buffer){
-            temp[index++] = value;
+    private void calculate() throws Exception {
+        int[] shape = {1,3};
+        int[] shape2 ={1,9};
+
+        float fps = 0F;
+        try {
+            fps = Float.parseFloat(SystemInformationUtils.getFps());
+        } catch (Exception e){
+            e.printStackTrace();
+            return;
         }
 
-        x.loadArray(temp,new int[] {index} );
-        y = TensorBuffer.createFixedSize(shape,DataType.FLOAT32);
+        float [] input = {Float.parseFloat(SystemInformationUtils.getBigCpuFreq()),Float.parseFloat(SystemInformationUtils.getLittleCpuFreq()),fps};
+
+        x.loadArray(input,new int[]{3});
+        y = TensorBuffer.createFixedSize(shape2,DataType.FLOAT32);
+
+        long t1 = System.currentTimeMillis();
         tfLiteClassificationUtil.predict(x.getFloatArray(), y.getBuffer());
+        long t2 = System.currentTimeMillis();
+        Log.d("TAG","predict takes " + (t2 - t1));
 
-        StringBuilder str = new StringBuilder();
-        for(final float value : y.getFloatArray()){
-            str.append(",");
-            str.append(value);
+        int choice = 0;
+        float max = Float.MIN_VALUE;
+        for(int i = 0; i < y.getFloatArray().length; i++){
+            if(y.getFloatArray()[i] > max){
+                max = y.getFloatArray()[i];
+                choice = i;
+            }
         }
-        output.setText(str.toString());
+
+        Log.d("TAG","************************************");
+        Log.d("TAG","this time "+ "little:" + input[1] + "\tbig:" + input[0] + "\tfps:" + input[2]);
+        t1 = System.currentTimeMillis();
+        CPUFreqSetting.setFreq(choice);
+        t2 = System.currentTimeMillis();
+        Log.d("TAG","set frequency takes " + (t2 - t1));
     }
 }

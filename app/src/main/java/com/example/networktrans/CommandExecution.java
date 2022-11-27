@@ -7,11 +7,6 @@ import java.io.InputStreamReader;
 
 import android.util.Log;
 
-/**
- * 执行shell脚本工具类
- * @author Mountain
- *
- */
 public class CommandExecution {
 
     public static final String TAG = "CommandExecution";
@@ -21,35 +16,26 @@ public class CommandExecution {
     public final static String COMMAND_EXIT     = "exit\n";
     public final static String COMMAND_LINE_END = "\n";
 
-    /**
-     * Command执行结果
-     * @author Mountain
-     *
-     */
+
     public static class CommandResult {
         public int result = -1;
         public String errorMsg;
         public String successMsg;
     }
 
-    /**
-     * 执行命令—单条
-     * @param command
-     * @param isRoot
-     * @return
-     */
+
     public static CommandResult execCommand(String command, boolean isRoot) {
         String[] commands = {command};
-        return execCommand(commands, isRoot);
+        return actualExecCommand(commands, isRoot,true);
     }
 
-    /**
-     * 执行命令-多条
-     * @param commands
-     * @param isRoot
-     * @return
-     */
-    public static CommandResult execCommand(String[] commands, boolean isRoot) {
+    public static void easyExec(String command, boolean isRoot){
+        String [] commands = {command};
+        actualExecCommand(commands,isRoot,false);
+    }
+
+
+    public static CommandResult actualExecCommand(String[] commands, boolean isRoot, boolean outputOrNot) {
         CommandResult commandResult = new CommandResult();
         if (commands == null || commands.length == 0) return commandResult;
         Process process = null;
@@ -71,18 +57,17 @@ public class CommandExecution {
             os.writeBytes(COMMAND_EXIT);
             os.flush();
             commandResult.result = process.waitFor();
-            //获取错误信息
-            successMsg = new StringBuilder();
-            errorMsg = new StringBuilder();
-            successResult = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            errorResult = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-            String s;
-            while ((s = successResult.readLine()) != null) successMsg.append(s).append('\n');
-            while ((s = errorResult.readLine()) != null) errorMsg.append(s);
-            commandResult.successMsg = successMsg.toString();
-            commandResult.errorMsg = errorMsg.toString();
-            Log.i(TAG, commandResult.result + " | " + commandResult.successMsg
-                    + " | " + commandResult.errorMsg);
+            if(outputOrNot){
+                successMsg = new StringBuilder();
+                errorMsg = new StringBuilder();
+                successResult = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                errorResult = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+                String s;
+                while ((s = successResult.readLine()) != null) successMsg.append(s).append('\n');
+                while ((s = errorResult.readLine()) != null) errorMsg.append(s);
+                commandResult.successMsg = successMsg.toString();
+                commandResult.errorMsg = errorMsg.toString();
+            }
         } catch (IOException e) {
             String errmsg = e.getMessage();
             if (errmsg != null) {

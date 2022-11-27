@@ -1,10 +1,8 @@
 package com.example.networktrans;
 
 import org.tensorflow.lite.Interpreter;
-import org.tensorflow.lite.support.tensorbuffer.TensorBuffer;
 
 import java.io.File;
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
 
 public class TFLiteClassificationUtil {

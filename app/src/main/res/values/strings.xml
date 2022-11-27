@@ -5,4 +5,5 @@
     <string name="waiting">wating</string>
     <string name="little_freq">小核频率</string>
     <string name="fps">当前帧率</string>
+    <string name="SystemFlush">刷新信息</string>
 </resources>

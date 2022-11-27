@@ -105,4 +105,14 @@
         app:layout_constraintStart_toEndOf="@+id/textView6"
         app:layout_constraintTop_toBottomOf="@+id/textView5" />
 
+    <Button
+        android:id="@+id/buttonSystemFlush"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="36dp"
+        android:layout_marginTop="30dp"
+        android:text="@string/SystemFlush"
+        app:layout_constraintStart_toStartOf="@+id/textView7"
+        app:layout_constraintTop_toBottomOf="@+id/textView7" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
