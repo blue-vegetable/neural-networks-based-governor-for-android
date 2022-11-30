@@ -19,9 +19,9 @@ public class CPUFreqSetting {
 //        command = "echo \"userspace\" >  /sys/devices/system/cpu/cpufreq/policy4/scaling_governor";  // big cpu governor
 //        CommandExecution.execCommand(command,true);
         String command = "echo " + littleFreq + " > /sys/devices/system/cpu/cpufreq/policy0/scaling_setspeed"; // set little cpu frequency;
-        CommandExecution.execCommand(command,true);
+        CommandExecution.easyExec(command,true);
         command = "echo " + bigFreq + " > /sys/devices/system/cpu/cpufreq/policy4/scaling_setspeed"; // set big cpu frequency;
-        CommandExecution.execCommand(command,true);
+        CommandExecution.easyExec(command,true);
 
 
         // below is check code

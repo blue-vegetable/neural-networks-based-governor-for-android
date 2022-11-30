@@ -7,11 +7,9 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
-import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
-
 import androidx.core.app.NotificationCompat;
 
 import org.tensorflow.lite.DataType;
@@ -24,7 +22,7 @@ public class MyService extends Service {
     String view;
     TensorBuffer x =  TensorBuffer.createDynamic(DataType.FLOAT32);
     TensorBuffer y =  TensorBuffer.createDynamic(DataType.FLOAT32);
-
+    String TAG = "MyService";
 
     public class SystemInfoThread extends Thread{
         private String view;
@@ -33,9 +31,10 @@ public class MyService extends Service {
         }
         @Override
         public void run(){
+            //////////////////
             while(SystemInformationUtils.lastTimestamp == null){
                 try {
-                    Thread.sleep(1000);
+                    Thread.sleep(3000);
                     SystemInformationUtils.init(view);
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -46,12 +45,56 @@ public class MyService extends Service {
                 try {
                     Thread.sleep(1000);
                     calculate();
-//                    Toast.makeText(MyService.this, "running", Toast.LENGTH_SHORT).show();
-
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
+            ///////////////
+
+
+
+//            boolean currentViewIsOrNot = false;
+//            String currentActivity = null;
+//            while(true){
+//                if(!currentViewIsOrNot){    // 如果当前的view不是想要的view
+//                    do{   // 开始循环获得当前的view
+//                        try {
+//                            Thread.sleep(4000);
+//                        } catch (InterruptedException e) {
+//                            e.printStackTrace();
+//                        }
+//                        currentActivity = SystemInformationUtils.getCurrentFocusWindow();
+//                        Log.d(TAG,"current view is" + currentActivity);
+//                    }while(!currentActivity.equals(view.substring(0, view.length() - 2)));  // 判断当前前台是否是抖音，如果不是，则继续循环
+//                               // 能出循环说明当前已经是抖音里面了
+//                    try {
+//                        Thread.sleep(4000);
+//                        SystemInformationUtils.init(view);  // init 如果失败，说明当前不在抖音中，或者此时很卡
+//                        currentViewIsOrNot = true;
+//                    } catch (Exception e) {
+//                        e.printStackTrace();
+//                        currentViewIsOrNot = false;         // 不在抖音中
+//                        continue;                           // 从头开始
+//                    }
+
+//                if(SystemInformationUtils.lastTimestamp == null){
+//                    try {
+//                        Thread.sleep(4000);
+//                        SystemInformationUtils.init(view);  // init 如果失败，说明当前不在抖音中，或者此时很卡
+//                    currentViewIsOrNot = true;
+//                    } catch (Exception e) {
+//                        e.printStackTrace();
+//                        continue;                           // 从头开始
+//                    }
+//                }
+
+//                try {
+//                    Thread.sleep(1000);
+//                    calculate();
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                }
+//            }
         }
     }
 
@@ -78,7 +121,6 @@ public class MyService extends Service {
         super.onCreate();
 
         init();
-        Toast.makeText(this, "My Service Started", Toast.LENGTH_LONG).show();
         Log.d("TAG", "onStart");
         String channelId = null;
         // 8.0 以上需要特殊处理
@@ -101,9 +143,9 @@ public class MyService extends Service {
             e.printStackTrace();
         }
         String command = "echo \"userspace\" >  /sys/devices/system/cpu/cpufreq/policy0/scaling_governor"; // little cpu governor
-        CommandExecution.execCommand(command,true);
+        CommandExecution.easyExec(command,true);
         command = "echo \"userspace\" >  /sys/devices/system/cpu/cpufreq/policy4/scaling_governor";  // big cpu governor
-        CommandExecution.execCommand(command,true);
+        CommandExecution.easyExec(command,true);
         MyService.SystemInfoThread sit = new MyService.SystemInfoThread(view);
         sit.start();
     }

@@ -23,7 +23,7 @@ public class SystemInformationUtils {
 
     public static void init(String view1) throws Exception {
         view = view1;
-        CommandExecution.execCommand("dumpsys SurfaceFlinger --latency-clear ", true);
+        CommandExecution.easyExec("dumpsys SurfaceFlinger --latency-clear ", true);
         ArrayList<Float> timestamps = getFrameData();
         baseTimestamp = 0F;
         for(final Float value: timestamps){
@@ -70,7 +70,7 @@ public class SystemInformationUtils {
 
     public static String getFps() throws Exception {
         String command = "dumpsys SurfaceFlinger --latency-clear";
-        CommandExecution.execCommand(command,true);
+        CommandExecution.easyExec(command,true);
         ArrayList<Float> oldTimestamps = getFrameData();
         Thread.sleep(1000);
         ArrayList<Float> newTimestamps = getFrameData();
@@ -105,5 +105,13 @@ public class SystemInformationUtils {
         }
         fps = fpsCount;
         return Integer.toString(fps);
+    }
+
+    public static String getCurrentFocusWindow(){
+
+        String str = CommandExecution.execCommand("dumpsys window | grep mCurrentFocus",true).successMsg;
+        String [] strSplited = str.split(" ");
+        int n = strSplited.length;
+        return strSplited[n-1].substring(0, strSplited[n-1].length()-2);
     }
 }

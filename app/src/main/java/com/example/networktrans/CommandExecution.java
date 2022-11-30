@@ -57,7 +57,7 @@ public class CommandExecution {
             os.writeBytes(COMMAND_EXIT);
             os.flush();
             commandResult.result = process.waitFor();
-            if(outputOrNot){
+//            if(outputOrNot){
                 successMsg = new StringBuilder();
                 errorMsg = new StringBuilder();
                 successResult = new BufferedReader(new InputStreamReader(process.getInputStream()));
@@ -67,14 +67,7 @@ public class CommandExecution {
                 while ((s = errorResult.readLine()) != null) errorMsg.append(s);
                 commandResult.successMsg = successMsg.toString();
                 commandResult.errorMsg = errorMsg.toString();
-            }
-        } catch (IOException e) {
-            String errmsg = e.getMessage();
-            if (errmsg != null) {
-                Log.e(TAG, errmsg);
-            } else {
-                e.printStackTrace();
-            }
+//            }
         } catch (Exception e) {
             String errmsg = e.getMessage();
             if (errmsg != null) {
