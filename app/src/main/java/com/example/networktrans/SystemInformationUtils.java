@@ -23,7 +23,8 @@ public class SystemInformationUtils {
 
     public static void init(String view1) throws Exception {
         view = view1;
-        CommandExecution.easyExec("dumpsys SurfaceFlinger --latency-clear ", true);
+        CommandExecution.easyExec("dumpsys SurfaceFlinger --latency-clear ", false);
+
         ArrayList<Float> timestamps = getFrameData();
         baseTimestamp = 0F;
         for(final Float value: timestamps){
@@ -108,7 +109,6 @@ public class SystemInformationUtils {
     }
 
     public static String getCurrentFocusWindow(){
-
         String str = CommandExecution.execCommand("dumpsys window | grep mCurrentFocus",true).successMsg;
         String [] strSplited = str.split(" ");
         int n = strSplited.length;

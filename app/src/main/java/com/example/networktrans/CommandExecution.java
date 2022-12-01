@@ -17,19 +17,19 @@ public class CommandExecution {
     public final static String COMMAND_LINE_END = "\n";
 
 
-    public static class CommandResult {
+    public static class CommandResult {   // 该类为返回值的类
         public int result = -1;
         public String errorMsg;
         public String successMsg;
     }
 
 
-    public static CommandResult execCommand(String command, boolean isRoot) {
+    public static CommandResult execCommand(String command, boolean isRoot) {   // 需要显示输出时调用的shell用的函数
         String[] commands = {command};
         return actualExecCommand(commands, isRoot,true);
     }
 
-    public static void easyExec(String command, boolean isRoot){
+    public static void easyExec(String command, boolean isRoot){              // 不需要输出时的函数
         String [] commands = {command};
         actualExecCommand(commands,isRoot,false);
     }
@@ -42,8 +42,8 @@ public class CommandExecution {
         DataOutputStream os = null;
         BufferedReader successResult = null;
         BufferedReader errorResult = null;
-        StringBuilder successMsg = null;
-        StringBuilder errorMsg = null;
+        StringBuilder successMsg;
+        StringBuilder errorMsg;
         try {
             process = Runtime.getRuntime().exec(isRoot ? COMMAND_SU : COMMAND_SH);
             os = new DataOutputStream(process.getOutputStream());
@@ -57,7 +57,8 @@ public class CommandExecution {
             os.writeBytes(COMMAND_EXIT);
             os.flush();
             commandResult.result = process.waitFor();
-//            if(outputOrNot){
+
+            if(outputOrNot){    // 下面都是些处理输出的代码
                 successMsg = new StringBuilder();
                 errorMsg = new StringBuilder();
                 successResult = new BufferedReader(new InputStreamReader(process.getInputStream()));
@@ -67,15 +68,15 @@ public class CommandExecution {
                 while ((s = errorResult.readLine()) != null) errorMsg.append(s);
                 commandResult.successMsg = successMsg.toString();
                 commandResult.errorMsg = errorMsg.toString();
-//            }
-        } catch (Exception e) {
+            }
+        } catch (Exception e) {   // 基本不会出现，但是写个
             String errmsg = e.getMessage();
             if (errmsg != null) {
                 Log.e(TAG, errmsg);
             } else {
                 e.printStackTrace();
             }
-        } finally {
+        } finally {   // 善后工作，该回收的回收
             try {
                 if (os != null) os.close();
                 if (successResult != null) successResult.close();

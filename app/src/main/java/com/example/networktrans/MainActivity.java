@@ -28,34 +28,6 @@ public class MainActivity extends AppCompatActivity {
     TensorBuffer x =  TensorBuffer.createDynamic(DataType.FLOAT32);
     TensorBuffer y =  TensorBuffer.createDynamic(DataType.FLOAT32);
 
-    public class SystemInfoThread extends Thread{
-        private String view;
-        public SystemInfoThread(String view){
-            this.view = view;
-        }
-        @Override
-        public void run(){
-            while(SystemInformationUtils.lastTimestamp == null){
-                try {
-                    Thread.sleep(1000);
-                    SystemInformationUtils.init(view);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-
-            while(true){
-                try {
-                    Thread.sleep(1000);
-                    calculate();
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -105,66 +77,13 @@ public class MainActivity extends AppCompatActivity {
                     }
                     break;
                 case R.id.button2: buffer.add(2.0F);  output.setText("2"); break;
-                case R.id.button3: try {
-                    calculate();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+                case R.id.button3: buffer.add(2.0F);break;
                 default: break;
             }
         }
     };
 
-    private void loadModel() {
-        String classificationModelPath = getCacheDir().getAbsolutePath() + File.separator + "model.tflite";
-        Utils.copyFileFromAsset(MainActivity.this, "model.tflite", classificationModelPath);
-        // load the model
-        try {
-            tfLiteClassificationUtil = new TFLiteClassificationUtil(classificationModelPath);
-            Toast.makeText(MainActivity.this, "load model succeeded", Toast.LENGTH_SHORT).show();
-        } catch (Exception e) {
-            Toast.makeText(MainActivity.this, "load model failed", Toast.LENGTH_SHORT).show();
-            e.printStackTrace();
-            finish();
-        }
-    }
 
-    private void calculate() throws Exception {
-        int[] shape = {1,3};
-        int[] shape2 ={1,9};
 
-        float fps = 0F;
-        try {
-            fps = Float.parseFloat(SystemInformationUtils.getFps());
-        } catch (Exception e){
-            e.printStackTrace();
-            return;
-        }
 
-        float [] input = {Float.parseFloat(SystemInformationUtils.getBigCpuFreq()),Float.parseFloat(SystemInformationUtils.getLittleCpuFreq()),fps};
-
-        x.loadArray(input,new int[]{3});
-        y = TensorBuffer.createFixedSize(shape2,DataType.FLOAT32);
-
-        long t1 = System.currentTimeMillis();
-        tfLiteClassificationUtil.predict(x.getFloatArray(), y.getBuffer());
-        long t2 = System.currentTimeMillis();
-        Log.d("TAG","predict takes " + (t2 - t1));
-
-        int choice = 0;
-        float max = Float.MIN_VALUE;
-        for(int i = 0; i < y.getFloatArray().length; i++){
-            if(y.getFloatArray()[i] > max){
-                max = y.getFloatArray()[i];
-                choice = i;
-            }
-        }
-
-        Log.d("TAG","************************************");
-        Log.d("TAG","this time "+ "little:" + input[1] + "\tbig:" + input[0] + "\tfps:" + input[2]);
-        t1 = System.currentTimeMillis();
-        CPUFreqSetting.setFreq(choice);
-        t2 = System.currentTimeMillis();
-        Log.d("TAG","set frequency takes " + (t2 - t1));
-    }
 }
