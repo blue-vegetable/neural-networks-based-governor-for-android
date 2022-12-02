@@ -52,7 +52,7 @@ public class SystemInformationUtils {
         float refreshPeriod = Float.parseFloat(outputSplited[0]) / nanosecondsPerSecond;
         long  pendingFenceTimestamp = (1L << 63) - 1;
         for(final String value : outputSplited){
-            if(value.length() <= 17 ){
+            if(value.length() <= 17  || value.length() >= 70){
                 continue;
             }
             String [] valueSplited = value.split("\t");

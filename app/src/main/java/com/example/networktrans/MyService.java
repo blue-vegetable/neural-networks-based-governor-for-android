@@ -25,6 +25,7 @@ public class MyService extends Service {
     TensorBuffer x =  TensorBuffer.createDynamic(DataType.FLOAT32);
     TensorBuffer y =  TensorBuffer.createDynamic(DataType.FLOAT32);
     String TAG = "MyService";
+    public static final String CHANNEL_ID = "ForegroundServiceChannel";
 
     public class SystemInfoThread extends Thread{
         private String view;
@@ -120,15 +121,47 @@ public class MyService extends Service {
         return channelId;
     }
 
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        String input = intent.getStringExtra("inputExtra");
+        createNotificationChannel();
+        Intent notificationIntent = new Intent(this, MainActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this,
+                0, notificationIntent,  PendingIntent.FLAG_IMMUTABLE);
+        Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+                .setContentTitle("Foreground Service")
+                .setContentText(input)
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setContentIntent(pendingIntent)
+                .build();
+        startForeground(1, notification);
+        //do heavy work on a background thread
+        //stopSelf();
+        return START_NOT_STICKY;
+    }
+
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel serviceChannel = new NotificationChannel(
+                    CHANNEL_ID,
+                    "Foreground Service Channel",
+                    NotificationManager.IMPORTANCE_DEFAULT
+            );
+            NotificationManager manager = getSystemService(NotificationManager.class);
+            manager.createNotificationChannel(serviceChannel);
+        }
+    }
 
     @Override
     public void onCreate(){
         super.onCreate();
         init();
 
-
-        Notification notification1 = createForegroundNotification();  // 启动前台服务的通知
-        startForeground(1, notification1);
+        Context context = getApplicationContext();
+        Intent intent = new Intent(context,MyService.class);
+        context.startForegroundService(intent);
+//        Notification notification1 = createForegroundNotification();  // 启动前台服务的通知
+//        startForeground(1, notification1);
 
         try {                                                // 这部分载入模型
             long t1 = System.currentTimeMillis();
